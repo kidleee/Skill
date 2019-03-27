@@ -24,6 +24,6 @@ Class arr_merage extends Controller{
         //若json数组转化为普通数组
         $arr = json_decode($json,true);
         //数组拼接一定是普通数组拼接。即使是json也要转变为二维普通数组拼接
-        $arr = $arr+$arr;
+        $arr = array_merage($arr,$arr);
     }
 }
