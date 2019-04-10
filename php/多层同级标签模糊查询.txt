@@ -1,0 +1,70 @@
+最近做项目，在做搜索模块的时候，模糊查询肯定少不了。
+
+今天就详细的看一下模糊查询：
+
+$where['title'] = array('like','%'.$words.'%');
+$where['title'] = array('like',array('%'.$words.'%','%'.$wordss.'%'));
+$where['title'] = array(array('like','%'.$words.'%'),array('like','%'.$wordss.'%'));
+一、当个字段做模糊查询。
+
+$words = "吃"; 
+$where['title'] = array('like','%'.$words.'%');
+$list = $TagDB->where($where)->select();
+这样执行的Sql是：
+
+SELECT * FROM `tp_keywords_sanqi` WHERE `title` LIKE '%吃%' 
+这个可以查询多个字段：
+
+$where['title'] = array('like','%'.$words.'%');
+$where['description'] = array('like','%'.$words.'%');
+$list = $TagDB->where($where)->select();
+上面的坏处：很多时候，我们做的是标题 title的查询，而且查询的时候，要求包含 title 包含两个或者以上的词：
+
+例如： 
+
+要求一：查询标题包含 “作用” 或 “怎样” ；
+
+$words = "怎样";
+$wordss = "作用";
+$where['title'] = array('like',array('%'.$words.'%','%'.$wordss.'%'));
+$list = $TagDB->where($where)->select();
+执行的Sql是这样的：
+
+SELECT * FROM `tp_keywords_sanqi` WHERE (`title` LIKE '%怎样%' OR `title` LIKE '%作用%') 
+要求二：查询标题中同时包含 “作用” 和 ”怎样“ ；
+
+$words = "怎样";
+$wordss = "作用";
+$where['title'] = array(array('like','%'.$words.'%'),array('like','%'.$wordss.'%'));
+$list = $TagDB->where($where)->select();
+执行的sql是这样的：
+
+SELECT * FROM `tp_keywords_sanqi` WHERE ( `title` LIKE '%怎样%' AND `title` LIKE '%作用%' ) 
+当然啦！还可以自己写Sql来执行：
+
+$sql = "SELECT * FROM `tp_keywords_sanqi` WHERE `title` LIKE '%什么%';";
+$sql = "SELECT * FROM `tp_keywords_sanqi` WHERE (`title` LIKE '%什么%') OR (`title` LIKE '%吃%');";
+$sql = "SELECT * FROM `tp_keywords_sanqi` WHERE (`title` LIKE '%什么%' AND `title` LIKE '%作用%')";
+$list = M()->query($sql);
+ 具体示例：
+
+复制代码
+$words = "作用 功效";
+$where = array();
+$wordsArr = explode(' ',$words);
+$whereArr = array();
+foreach($wordsArr as $k=>$v){
+    $arr = array();
+    if(!$v)unset($wordsArr[$k]); 
+    array_push($arr,'like');
+    array_push($arr,'%'.$v.'%');
+    array_push($whereArr,$arr);
+}
+$where['title'] = $whereArr;
+$list = $TagDB->where($where)->select();
+echo $TagDB->getLastSql();
+复制代码
+执行的Sql：
+
+SELECT * FROM `tp_keywords_sanqi` WHERE ( `title` LIKE '%作用%' AND `title` LIKE '%功效%' ) 
+目的达到！
